@@ -165,3 +165,79 @@ ngOnInit() {
 設定	意味
 @Injectable	このクラスは DI できるよ
 providedIn: 'root'	アプリ全体で 1 つのサービスを共有するよ（シングルトン）
+
+
+Angularアプリ起動
+   ↓
+DIコンテナ（管理者）が HousingService を1つだけ作る（newしてくれる）
+   ↓
+component.ts が inject(HousingService) と言う
+   ↓
+DIコンテナが「はいこれ」と渡してくれる
+
+
+ルーティングの基本
+
+ルーティングとは
+アプリケーション内で、あるコンポーネントから別のコンポーネントへ画面遷移させる仕組み。
+シングルページアプリケーション（SPA）ではページ全体を再読み込みせず、一部だけ更新して表示。
+
+Angular Router
+ルート（URLパス）と表示するコンポーネントを対応づける仕組み。
+
+--
+
+✔ app.routes.ts
+
+＞「この URL に来たら、このコンポーネントを表示して」
+
+✔ main.ts
+
+＞「OK！じゃあそのルールでアプリを起動するね！」
+
+
+app.routes.ts（設定ファイル）
+  └─ "/" → Home
+  └─ "/details/:id" → Details
+
+main.ts
+  └─ provideRouter(routes)  ← ルーターを有効化
+  └─ bootstrapApplication(App) ← アプリ起動！
+
+App（app.ts）
+  └─ <router-outlet> ← URLに応じてコンポーネントが差し替わる
+
+
+/**
+* 【Angular アプリ起動時の全体の流れ】
+*
+* 1. main.ts が最初に実行される
+*    - bootstrapApplication(App, { providers: [...] }) が呼ばれる
+*    - これにより Angular が App コンポーネントをアプリの起点として起動する
+*
+* 2. provideRouter([...]) によってルーティング情報が登録される
+*    - 例: { path: '', component: Home } が設定されていると
+*      URL が '/' のとき、自動的に Home コンポーネントが選択される
+*
+* 3. App コンポーネントが描画される
+*    - <app-root> タグが HTML の index.html に差し込まれる
+*    - AppComponent の template が読み込まれる
+*    - template 内の <router-outlet> が「ここにルート先コンポーネントを入れてください」という枠になる
+*
+* 4. Angular Router が現在の URL を確認する
+*    - 起動直後は通常 '/'（空パス）
+*    - ルーティング設定の中から path: '' に該当するルートを探す
+*    - そのルートに設定されたコンポーネント（例: Home）を決定する
+*
+* 5. RouterOutlet が Home コンポーネントを表示する
+*    - <router-outlet></router-outlet> の部分が
+*      実際には <app-home> に置き換わるように描画される
+*
+* 6. Home コンポーネントのテンプレートや CSS が読み込まれ、
+*    ユーザーが最初に目にする画面が完成する
+*
+* 【重要ポイント】
+* - <router-outlet> は routes（provideRouter）と紐づいている
+* - App コンポーネント自身は Home を直接呼び出していない
+* - 表示されるコンポーネントは「URL と routes の設定」で決まる
+*/
