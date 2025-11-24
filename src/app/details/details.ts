@@ -2,56 +2,28 @@
 import { Component, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-// Service / model（あなたのプロジェクト内のファイルパスに合わせる）
+// あなたのプロジェクトのサービス／モデルへのパスに合わせてください
 import { HousingService } from '../housing';
 import { HousingLocationInfo } from '../housinglocation';
 
-// Angular 共通ユーティリティ（テンプレートで *ngIf を使う場合に必要）
+// UI ヘルパー（*ngIf 等）と Reactive Forms 用モジュールを standalone コンポーネントで使うためにインポート
 import { NgIf } from '@angular/common';
-
-// フォームの [(ngModel)] を使うために必要
-import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 
 @Component({
   selector: 'app-details',
 
-  // standalone コンポーネントなのでテンプレートで使うディレクティブ／モジュールを明示する
-  // - NgIf: *ngIf を使うため（今回のテンプレートではオプションだが一般的に入れておく）
-  // - FormsModule: [(ngModel)]（双方向バインド）と (ngSubmit) を使うために必須
+  // standalone コンポーネントとして必要な機能（ディレクティブ／モジュール）を列挙
+  // NgIf: *ngIf を使うため（今回はオプションだが慣習的に入れておく）
+  // ReactiveFormsModule: FormGroup / FormControl をテンプレートで使うために必須
   standalone: true,
-  imports: [NgIf, FormsModule],
+  imports: [NgIf, ReactiveFormsModule],
 
-  /*
-
-  (ngSubmit)="submitApplication()"
-
-  フォームの送信イベントを Angular がキャッチして submitApplication() メソッドを呼び出します。
-
-  これは通常の HTML の submit ではなく、Angular 独自の ngSubmit です。
-
-  FormsModule をインポートしていないと ngSubmit は使えません。
-
-  */
-  /*
-
-  [(ngModel)]="name"
-
-  双方向データバインディングです。
-
-  ユーザーが入力した値をコンポーネント側の name 変数に自動で反映します。
-
-  逆にコンポーネント側で name を書き換えると、入力欄にも反映されます。
-
-  これも FormsModule が必要です。
-
-   */
-  // template: 実際の HTML（テンプレート式のコメントは行内で説明）
+  // テンプレート内は optional chaining (?.) を多用して
+  // データ読み込み前でも安全に動くようにしてあります
   template: `
     <article>
-      <!-- 画像表示
-           [src] は property binding（式を評価して属性に入れる）
-           ?. は optional chaining（データが undefined のときに安全に扱う）
-      -->
+      <!-- 画像: property binding で housingLocation?.photo を参照 -->
       <img
         class="listing-photo"
         [src]="housingLocation?.photo"
@@ -75,20 +47,26 @@ import { FormsModule } from '@angular/forms';
         </ul>
       </section>
 
-      <!-- 応募フォーム（この章で追加） -->
-      <!-- 注意: Angular のフォーム送信は (ngSubmit) を使うのが安全（ページリロードを防ぎ、FormDirective と連携） -->
+      <!-- 応募フォーム（Reactive Forms を使用） -->
+      <!-- ★ポイント：
+            - [formGroup]="applyForm" で TS 側の FormGroup と紐付ける
+            - formControlName="..." で個々の入力と FormControl を紐付ける
+            - (ngSubmit)="submitApplication()" で送信時に TS のメソッドを呼ぶ（ページ再読み込み防止）
+      -->
       <section class="listing-apply">
-        <h2 class="section-heading">Apply now</h2>
+        <h2 class="section-heading">Apply now to live here</h2>
 
-        <!-- (ngSubmit) を使うには FormsModule が必要。name 属性は ngModel と一緒に使う必須要素 -->
-        <form (ngSubmit)="submitApplication()">
-          <label for="name">Name</label>
-          <input id="name" type="text" [(ngModel)]="name" name="name" />
+        <form [formGroup]="applyForm" (ngSubmit)="submitApplication()">
+          <label for="first-name">First Name</label>
+          <input id="first-name" type="text" formControlName="firstName" />
+
+          <label for="last-name">Last Name</label>
+          <input id="last-name" type="text" formControlName="lastName" />
 
           <label for="email">Email</label>
-          <input id="email" type="email" [(ngModel)]="email" name="email" />
+          <input id="email" type="email" formControlName="email" />
 
-          <button type="submit">Submit</button>
+          <button type="submit" class="primary">Apply now</button>
         </form>
       </section>
     </article>
@@ -96,56 +74,62 @@ import { FormsModule } from '@angular/forms';
   styleUrls: ['./details.css'],
 })
 export class Details {
-  // ActivatedRoute を inject() して URL パラメータ（:id）を読み取る
-  // ActivatedRoute
-  // 現在のルート情報を取得する Angular サービス。
-  // 例: URL が /details/3 の場合、:id は 3。
-  // inject(ActivatedRoute) でコンポーネント内で使えるようになります。
+  /**
+   * ActivatedRoute を inject() して URL パラメータ（:id）を読み取る
+   * 例: URL が /details/3 なら id は "3"
+   */
   route: ActivatedRoute = inject(ActivatedRoute);
 
-  // HousingService を inject() してデータ取得や送信を行う
-  // HousingService
-  // 物件情報を取得したり、応募情報を送信するサービス。
-  // これも inject(HousingService) で DI コンテナから取得します。
-  // 親から渡す必要はなく、どのコンポーネントでも inject() で取得可能です。
-  // 親から渡す場合は @Input() デコレーターを使います。
+  /**
+   * HousingService を inject() してデータ取得や送信を行う
+   * どのコンポーネントからでも inject(HousingService) で同一のサービスインスタンスにアクセス可
+   */
   housingService = inject(HousingService);
 
-  // 取得した物件データを保持（存在しない可能性があるので undefined を許容）
+  /**
+   * 取得した物件データを保持（まだロードされていない可能性があるので undefined を許容）
+   */
   housingLocation: HousingLocationInfo | undefined;
 
-  // フォーム入力を格納するプロパティ（テンプレートの [(ngModel)] と連動）
-  name = '';
-  email = '';
+  /**
+   * ★ Reactive FormGroup を作成
+   * - 各 FormControl はテンプレートの formControlName と対応する
+   * - 初期値は全て空文字 ''
+   */
+  applyForm = new FormGroup({
+    firstName: new FormControl(''),
+    lastName: new FormControl(''),
+    email: new FormControl(''),
+  });
 
   constructor() {
-    // 起動時に URL のパラメータから id を取り出す（'/details/:id'）
+    // 起動時に URL の :id を取得して、サービスから該当物件データを取得
     const housingLocationId = Number(this.route.snapshot.params['id']);
-
-    // サービスを使って ID に対応する物件を取得して保持
-    // getHousingLocationById は HousingService 側で実装しておくこと
     this.housingLocation = this.housingService.getHousingLocationById(housingLocationId);
   }
 
   /**
    * フォーム送信ハンドラ
-   * - ここでは HousingService に申請データを渡す想定
-   * - 実際の処理（API 呼び出しやバリデーション、成功時のメッセージ表示など）は HousingService 側またはここで追加する
+   * - (ngSubmit) が発火したときに呼ばれる
+   * - this.applyForm.value にフォームの現在値が入っている
+   * - 値を取り出してサービスの submitApplication() に渡す（サービス側で送信やログ処理を行う想定）
    */
   submitApplication() {
-    // 簡易バリデーション（実運用ならもっと厳密に）
-    if (!this.name || !this.email) {
-      // ブラウザ内で簡単に通知したい場合は alert でも良いが、実装は自由
-      alert('Please enter name and email.');
+    // 簡易バリデーション（空チェック） — 実運用ならもっと厳密にする
+    const first = this.applyForm.value.firstName ?? '';
+    const last = this.applyForm.value.lastName ?? '';
+    const email = this.applyForm.value.email ?? '';
+
+    if (!first || !last || !email) {
+      alert('Please fill in all fields.');
       return;
     }
 
-    // サービスに送る（サービス側で送信処理 or 単にログ出力するなど）
-    this.housingService.submitApplication(this.name, this.email, this.housingLocation?.name ?? '');
+    // サービスに渡す（サービス側で console.log したり API 呼び出ししたりする想定）
+    this.housingService.submitApplication(first, last, email);
 
-    // 送信後の UI 更新（例：フォームクリア、トースト表示など）
-    this.name = '';
-    this.email = '';
-    alert('Application submitted. (This is a demo alert.)');
+    // 送信後の UI 更新（フォームをクリア）
+    this.applyForm.reset();
+    alert('Application submitted (demo).');
   }
 }
