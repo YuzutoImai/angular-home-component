@@ -1,10 +1,10 @@
-import {Component} from '@angular/core';
-import { HousingLocation } from '../housing-location/housing-location';
-import { HousingLocationInfo } from '../housinglocation';
-
-
+import {Component, inject} from '@angular/core';
+import {HousingLocation} from '../housing-location/housing-location';
+import {HousingLocationInfo} from '../housinglocation';
+import {HousingService} from '../housing';
 @Component({
   selector: 'app-home',
+  imports: [HousingLocation],
   template: `
     <section>
       <form>
@@ -13,27 +13,18 @@ import { HousingLocationInfo } from '../housinglocation';
       </form>
     </section>
     <section class="results">
-      @for (housingLocation of housingLocationList; track $index) {
+      @for(housingLocation of housingLocationList; track $index) {
         <app-housing-location [housingLocation]="housingLocation" />
       }
     </section>
   `,
-  imports: [HousingLocation],
   styleUrls: ['./home.css'],
 })
 export class Home {
-  readonly baseUrl='https://angular.dev/assets/images/tutorials/common';
-  
-  housingLocationList: HousingLocationInfo[] = [
-    {
-    id: 9999,
-    name: 'Test Home',
-    city: 'Test city',
-    state: 'ST',
-    photo: `${this.baseUrl}/example-house.jpg`,
-    availableUnits: 99,
-    wifi: true,
-    laundry: false,
-    },
-  ];
+  housingLocationList: HousingLocationInfo[] = [];
+  housingService: HousingService = inject(HousingService);
+
+  constructor() {
+    this.housingLocationList = this.housingService.getAllHousingLocations();
+  }
 }
