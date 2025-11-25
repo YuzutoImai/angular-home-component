@@ -1,0 +1,163 @@
+C+x,C+Fでファイル名の検索
+C+sでファイル内検索
+C+*でコメントアウト
+
+##
+
+1.モデル
+メニューの定義(データの型)
+ただのデータ型の定義をする
+ロジックもUI画面を持たない
+export interface HousingLocationInfo{
+    id:number;
+    name:string;
+}
+
+2.サービス
+データの管理
+画面は持たない
+@Injectable({ providedIn: 'root' })
+export class HousingService {
+housingLocationList: HousingLocationInfo[] = [
+{ id: 1, name: 'Sample Home', city: 'Tokyo', ... }
+];
+
+3.コンポーネント
+HTML表示
+CSS見た目
+TypeScript(画面のロジック)
+
+##
+
+- angular.json
+- Angular CLI の設定ファイル
+- ビルドやサーブの設定、アセットやスタイルの読み込み、プロジェクト構成を定義
+- 例: どの CSS をグローバルに読み込むか、ビルド出力先など
+
+- .editorconfig
+- エディタ共通のコードスタイル設定
+- インデント幅、改行コード、文字コードなどを統一するためのファイル
+
+- index.html
+- アプリの最初に読み込まれる HTML
+- <app-root></app-root> が置かれていて、Angular コンポーネントがここに展開される
+- メタタグや外部ライブラリの読み込みもここで設定
+
+- main.ts
+- Angular アプリの起動処理を記述
+- bootstrapApplication(AppComponent) などでルートコンポーネントを起動する
+- 開発時と本番時の環境設定を切り替えることもある
+
+- styles.css
+- プロジェクト全体に適用される CSS
+- 各コンポーネントの CSS とは別に、共通デザインやリセット CSS を記述
+
+- app.ts
+- ルートコンポーネント (AppComponent) の TypeScript ファイル
+- アプリ全体のロジックや状態を持つ最上位コンポーネント
+
+- app.routes.ts
+- ルーティング設定ファイル
+- URL パスとコンポーネントの対応関係を定義
+
+- app.html
+- AppComponent のテンプレート (HTML)
+- ナビゲーションバーや <router-outlet> を配置して、画面遷移の基盤を作る
+
+- app.css
+- AppComponent 専用のスタイル
+- グローバルではなく、このコンポーネントにだけ適用される CSS
+
+- app.config.ts
+- アプリの設定情報をまとめるファイル
+- API のエンドポイント、環境変数、サービス設定などを管理
+- プロジェクトによっては environment.ts を使う場合もある
+
+##
+
+assetsに追加する場合はangularにパスの許可を書く。
+各コンポーネントのstyleUrlsに書くとそのコンポーネント専用のCSSになる。
+
+##
+
+親コンポーネントから子コンポーネントへデータを渡すために@input()を用いる。
+//親コンポーネントが子コンポーネントに情報を渡す。
+<app-housing-location
+    [housingLocation]="housingLocation"
+/>
+// 子コンポーネント
+inputを用いて受け取る
+housingLocation = input.required<HousingLocationInfo>();
+
+##
+
+
+housing(サービス)のHousingServiceクラス
+@Injectable({ providedIn: 'root' })でアプリ全体で1つのインスタンス
+を共有。
+- サービス (HousingService) が住宅データを管理
+- Home コンポーネントが  housingService: HousingService = inject(HousingService);でサービスを取り込む
+- コンストラクタで this.housingLocationList = this.housingService.getAllHousingLocations();
+を呼び出し、データを取得
+- テンプレートで @for(...) を使ってリストを展開し、子コンポーネント (HousingLocation) に渡す
+- 子コンポーネントが input.required<HousingLocationInfo>() で受け取り、表示する
+
+--
+
+route: ActivatedRoute = inject(ActivatedRoute);
+- Angular Router が提供する サービスです。(サービス)
+- 「現在のルート情報」を保持していて、URL パラメータやクエリパラメータ、ルートに紐づくデータなどを取得できます。
+- 例: ルーティング設定で
+{ path: 'details/:id', component: Details }
+- としてある場合、URL が /details/3 なら ActivatedRoute から id = 3 を取り出せます。
+
+- これによりクラス内でthis.routeを使って現在のルート情報にアクセスができる。
+const housingLocationId = Number(this.route.snapshot.params['id']);
+
+##
+
+ (ngSubmit)="submitApplication()"
+  フォームの送信イベントを Angular がキャッチして submitApplication() メソッドを呼び出します。
+  これは通常の HTML の submit ではなく、Angular 独自の ngSubmit です。
+  FormsModule をインポートしていないと ngSubmit は使えません。
+
+  [(ngModel)]="name"
+  双方向データバインディングです。
+  ユーザーが入力した値をコンポーネント側の name 変数に自動で反映します。
+  逆にコンポーネント側で name を書き換えると、入力欄にも反映されます。
+  これも FormsModule が必要です。
+
+- フォーム入力
+- ユーザーが <input> に文字を入力すると、[(ngModel)]="name" や [(ngModel)]="email" によって、コンポーネントの name / email プロパティに即座に反映されます。
+- これは 双方向データバインディングなので、逆にコンポーネント側で this.name = 'Imai'; と書けば、入力欄にも "Imai" が表示されます。
+- フォーム送信
+- <form (ngSubmit)="submitApplication()"> によって、送信ボタンを押すと Angular が submitApplication() メソッドを呼び出します。
+- このとき、すでに name と email プロパティには入力値が入っているので、メソッド内でその値を評価できます。
+- メソッド内で評価
+
+##
+
+ルーティングとは
+アプリケーション内で、あるコンポーネントから別のコンポーネントへ画面遷移させる仕組み。
+SPAではページ全体を再読み込みせず一部だけ更新。
+Angular Router
+URLパスを表示するコンポーネントを対応付ける仕組み。
+
+app.routes.ts
+このURLに来たらこのコンポーネントを表示してということ。
+main.ts
+「OK!そのルールでアプリを起動するね」
+
+2.app.routes.ts（設定ファイル）
+└─ "/" → Home
+└─ "/details/:id" → Details
+
+1.main.ts
+└─ provideRouter(routes) ← ルーターを有効化
+└─ bootstrapApplication(App) ← アプリ起動！
+
+3.App（app.ts）
+└─ <router-outlet> ← URLに応じてコンポーネントが差し替わる
+
+##
+
