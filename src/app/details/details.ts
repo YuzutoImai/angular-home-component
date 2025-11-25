@@ -7,7 +7,7 @@ import { HousingService } from '../housing';
 import { HousingLocationInfo } from '../housinglocation';
 
 // UI ヘルパー（*ngIf 等）と Reactive Forms 用モジュールを standalone コンポーネントで使うためにインポート
-import { NgIf } from '@angular/common';
+
 import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 
 @Component({
@@ -17,7 +17,7 @@ import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
   // NgIf: *ngIf を使うため（今回はオプションだが慣習的に入れておく）
   // ReactiveFormsModule: FormGroup / FormControl をテンプレートで使うために必須
   standalone: true,
-  imports: [NgIf, ReactiveFormsModule],
+  imports: [ ReactiveFormsModule],
 
   // テンプレート内は optional chaining (?.) を多用して
   // データ読み込み前でも安全に動くようにしてあります
